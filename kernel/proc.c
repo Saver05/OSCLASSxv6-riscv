@@ -615,6 +615,34 @@ kill(int pid)
   return -1;
 }
 
+//returns the amount of files open in given pid
+int getfilenum(int pid){
+  struct proc *p;
+  int count = 0;
+
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->pid == pid){
+      if (p == myproc()){
+        for(int i =0; i < NOFILE; i++){
+          if(p->ofile[i] != 0){
+            count++;
+          }
+        }
+      }else{
+        acquire(&p->lock);
+        for(int i =0; i < NOFILE; i++){
+          if(p->ofile[i] != 0){
+            count++;
+          }
+        }
+        release(&p->lock);
+      }
+      return count;
+    }
+  }
+  return -1;
+}
+
 void
 setkilled(struct proc *p)
 {

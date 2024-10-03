@@ -1,4 +1,5 @@
 struct stat;
+typedef unsigned int uint;
 
 // system calls
 int fork(void);
@@ -9,6 +10,7 @@ int write(int, const void*, int);
 int read(int, void*, int);
 int close(int);
 int kill(int);
+int getfilenum(int);
 int exec(const char*, char**);
 int open(const char*, int);
 int mknod(const char*, short, short);
