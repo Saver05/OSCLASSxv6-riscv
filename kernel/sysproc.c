@@ -5,6 +5,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "pstat.h"
 
 uint64
 sys_exit(void)
@@ -95,4 +96,25 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64 sys_settickets(int number){
+  if (number < 0){
+    return -1;
+  }
+  myproc()->tickets = number;
+  return 0;
+}
+
+uint64 sys_getpinfo(struct pstat *pstat){
+  struct proc *p = myproc();
+  int i =0;
+  acquire(&p->lock);
+  for (p = myproc(); p < &p[NPROC]; p++){
+    pstat->inuse[i] = (p->state != UNUSED);
+    pstat->pid[i] = p->pid;
+    pstat->tickets[i] = p->tickets;
+  }
+  release(&p->lock);
+  return 0;
 }

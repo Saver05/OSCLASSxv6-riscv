@@ -3,6 +3,7 @@
 #include "memlayout.h"
 #include "riscv.h"
 #include "defs.h"
+#include "random.h"
 
 volatile static int started = 0;
 
@@ -39,6 +40,6 @@ void main()
     trapinithart();   // install kernel trap vector
     plicinithart();   // ask PLIC for device interrupts
   }
-
+  rand_init(55555);
   scheduler();        
 }

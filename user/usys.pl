@@ -37,3 +37,5 @@ entry("sbrk");
 entry("sleep");
 entry("uptime");
 entry("getfilenum");
+entry("settickets");
+entry("getpinfo")

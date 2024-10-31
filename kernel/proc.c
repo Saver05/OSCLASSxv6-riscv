@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "random.h"
 
 struct cpu cpus[NCPU];
 
@@ -124,7 +125,7 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-
+  p->tickets = 10;
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -241,7 +242,7 @@ userinit(void)
   // and data into it.
   uvmfirst(p->pagetable, initcode, sizeof(initcode));
   p->sz = PGSIZE;
-
+  p->tickets = 1;
   // prepare for the very first "return" from kernel to user.
   p->trapframe->epc = 0;      // user program counter
   p->trapframe->sp = PGSIZE;  // user stack pointer
@@ -295,7 +296,7 @@ fork(void)
     return -1;
   }
   np->sz = p->sz;
-
+  np->tickets = p->tickets; //copy over tickets
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
@@ -444,39 +445,38 @@ wait(uint64 addr)
 void
 scheduler(void)
 {
-  struct proc *p;
+  struct proc *p = proc;
   struct cpu *c = mycpu();
-
-  c->proc = 0;
+  int winner;
   for(;;){
-    // The most recent process to run may have had interrupts
-    // turned off; enable them to avoid a deadlock if all
-    // processes are waiting.
+    int total_tickets = 0;
     intr_on();
 
-    int found = 0;
-    for(p = proc; p < &proc[NPROC]; p++) {
-      acquire(&p->lock);
-      if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-        found = 1;
-      }
-      release(&p->lock);
-    }
-    if(found == 0) {
-      // nothing to run; stop running on this core until an interrupt.
-      intr_on();
-      asm volatile("wfi");
-    }
+  	for (p = proc; p < &proc[NPROC]; p++){
+        acquire(&p->lock);
+    	if (p->state == RUNNABLE) {
+     	 total_tickets += p->tickets;
+    	}
+        release(&p->lock);
+  	}
+  	winner = scaled_random(0,total_tickets);
+  	int current_ticket_count = 0;
+  	for (p = proc; p < &proc[NPROC]; p++){
+        acquire(&p->lock);
+    	if (p->state == RUNNABLE) {
+     	 current_ticket_count += p->tickets;
+      	 if (current_ticket_count >= winner) {
+       	    p->tickets++;  // Increment its tick count
+            p->state = RUNNING;
+            c->proc = p;
+       	    swtch(&c->context, &p->context);  // Run the selected process
+            c->proc=0;
+            release(&p->lock);
+       	    break;
+     	 }
+		}
+        release(&p->lock);
+  	}
   }
 }
 
