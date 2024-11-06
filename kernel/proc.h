@@ -106,5 +106,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   int tickets;                 // Number of tickets
 };
+#include "pstat.h"
 
 int getfilenum(int pid);
+int getpinfo(struct pstat *p);

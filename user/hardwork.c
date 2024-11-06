@@ -35,7 +35,6 @@ int hardWork()
             for (int r = 0; r < N-1; ++r)
                 for (int c =0; c < N; ++c)
                 {
-                  printf("Run");
                     if (bigFun[r][c] > bigFun[r+1][c])
                     {
                         int temp = bigFun[r][c];

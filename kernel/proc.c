@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 #include "random.h"
+#include "pstat.h"
 
 struct cpu cpus[NCPU];
 
@@ -677,6 +678,18 @@ either_copyout(int user_dst, uint64 dst, void *src, uint64 len)
   }
 }
 
+int getpinfo(struct pstat *p)
+{
+  struct pstat pinfo;
+  for (int i=0; i < NPROC; ++i)
+   {
+     pinfo.inuse[i] = (proc[i].state != UNUSED);
+     pinfo.tickets[i] = (proc[i].tickets);
+     pinfo.pid[i] = (proc[i].pid);
+   }
+  either_copyout(1, (uint64) p, &pinfo, sizeof(struct pstat));
+  return 0;
+ }
 // Copy from either a user address, or kernel address,
 // depending on usr_src.
 // Returns 0 on success, -1 on error.

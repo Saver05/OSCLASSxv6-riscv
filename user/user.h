@@ -1,5 +1,6 @@
 struct stat;
 typedef unsigned int uint;
+#include "kernel/pstat.h"
 
 // system calls
 int fork(void);
@@ -25,7 +26,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int settickets(int);
-int getpinfo(struct stat*);
+int getpinfo(struct pstat*);
 
 // ulib.c
 int stat(const char*, struct stat*);
