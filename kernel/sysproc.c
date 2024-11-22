@@ -96,3 +96,15 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64 sys_pgaccess(void){
+  uint64 start_va;
+  int num_pages;
+  uint64 bitmask_addr;
+
+  argaddr(0, &start_va);
+  argint(1, &num_pages);
+  argaddr(2, &bitmask_addr);
+
+  return pgaccess(start_va, num_pages, bitmask_addr);
+}

@@ -187,3 +187,6 @@ void            virtio_disk_intr(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+int pgaccess(uint64 start_va, int num_pages, uint64 bitmask_addr);
+void vmprint(pagetable_t pagetable);

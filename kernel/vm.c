@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -448,4 +450,44 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+void vmprint(pagetable_t pagetable){
+  printf("Page table %p\n", pagetable);
+}
+
+int pgaccess(uint64 start_va, int num_pages, uint64 bitmask_addr)
+{
+  struct proc *p = myproc();
+  uint64 va = start_va;
+  int max_pages = 64;
+  uint64 bitmask = 0;
+  pte_t *pte;
+
+  if(num_pages > max_pages)
+    num_pages = max_pages;
+
+  for(int i = 0; i < num_pages; i++, va += PGSIZE) {
+    if(va >= MAXVA)
+      return -1;
+
+    pte = walk(p->pagetable, va, 0);
+    if(pte == 0)
+      continue;
+    if((*pte & PTE_V) == 0)
+      continue;
+    if((*pte & PTE_U) == 0)
+      continue;
+
+    if(*pte & PTE_A) {
+      bitmask |= (1L << i);
+
+      // Clear the PTE_A bit
+      *pte &= ~PTE_A;
+    }
+    }
+    if(copyout(p->pagetable, bitmask_addr, (char *)&bitmask, sizeof(bitmask)) < 0)
+    return -1;
+
+  return 0;
 }
